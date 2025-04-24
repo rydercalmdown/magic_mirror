@@ -20,9 +20,9 @@ current_mode = "standby" # or "menu"
 HABITS = [
     "Brush Teeth",
     "Floss",
-    "Take Vitamins",
-    "Meditate (5 min)",
-    "Drink Water (1L)"
+    "Moisturizer",
+    "Sunscreen",
+    "Eye Cream"
 ]
 
 # Initialize habit completion status in Redis if not present
