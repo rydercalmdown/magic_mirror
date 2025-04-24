@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: magic-mirror-backend-container # Explicit container name
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app # Mount local code for development
+    depends_on:
+      - redis
+    environment:
+      - FLASK_ENV=development # Enable debug mode
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    # command: flask run --host=0.0.0.0 --port=5001 # Not needed if using CMD in Dockerfile
+
+  redis:
+    image: "redis:alpine"
+    container_name: magic-mirror-redis
+    ports:
+      - "6379:6379" # Expose Redis port if needed externally (optional)
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data: # Persist Redis data 
