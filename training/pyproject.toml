@@ -1,0 +1,10 @@
+[project]
+name = "magic-mirror-training"
+version = "0.1.0"
+description = "Training scripts for magic mirror project"
+requires-python = ">=3.8"
+dependencies = [
+    "mediapipe",
+    "pandas",
+    "tqdm",
+]
