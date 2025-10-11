@@ -122,13 +122,14 @@ class TestService:
 class WebcamMonitor:
     """Webcam monitoring service for person detection"""
     
-    def __init__(self, camera_index=0, detection_interval=2):
+    def __init__(self, camera_index=0, detection_interval=0.33):
         self.camera_index = camera_index
         self.detection_interval = detection_interval
         self.is_running = False
         self.thread = None
         self.person_detected = False
         self.last_detection_time = None
+        self.last_seen_time = None  # last frame timestamp where a person was seen
         
         # Load Haar cascades
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -190,20 +191,35 @@ class WebcamMonitor:
                 # Face and body detection
                 person_found = self._detect_face_or_body(gray)
             
-            # Update detection state
+            # Smoothing/robustness: immediate detect, 2s grace before not-detected
+            now_dt = datetime.now()
             was_detected = self.person_detected
-            self.person_detected = person_found
-            
+
             if person_found:
-                self.last_detection_time = datetime.now()
-            
-            # Emit event if detection state changed
-            if was_detected != self.person_detected:
-                print(f"👤 Person detection: {'DETECTED' if self.person_detected else 'NOT DETECTED'}")
-                sio.emit('personDetection', {
-                    'detected': self.person_detected,
-                    'timestamp': self.last_detection_time.isoformat() if self.last_detection_time else None
-                })
+                self.last_seen_time = now_dt
+                if not self.person_detected:
+                    # switch to detected immediately
+                    self.person_detected = True
+                    self.last_detection_time = now_dt
+                    print("👤 Person detection: DETECTED")
+                    sio.emit('personDetection', {
+                        'detected': True,
+                        'timestamp': self.last_detection_time.isoformat()
+                    })
+                else:
+                    # already detected; refresh timestamps
+                    self.last_detection_time = now_dt
+            else:
+                # no person in this frame; only flip to not detected if >2s since last_seen
+                if self.person_detected and self.last_seen_time is not None:
+                    delta = (now_dt - self.last_seen_time).total_seconds()
+                    if delta > 2.0:
+                        self.person_detected = False
+                        print("👤 Person detection: NOT DETECTED")
+                        sio.emit('personDetection', {
+                            'detected': False,
+                            'timestamp': self.last_detection_time.isoformat() if self.last_detection_time else None
+                        })
             
             previous_frame = gray.copy()
             time.sleep(self.detection_interval)
