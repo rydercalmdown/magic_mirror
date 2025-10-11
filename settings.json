@@ -1,0 +1,15 @@
+{
+  "port": 5000,
+  "data": {
+    "file": "data/habits_data.json"
+  },
+  "habits": [
+    "Brush teeth",
+    "Floss"
+  ],
+  "module": {
+    "updateInterval": 60000,
+    "showCompletedCount": true,
+    "showProgressBar": true
+  }
+}

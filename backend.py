@@ -37,14 +37,27 @@ DATA_FILE.parent.mkdir(exist_ok=True)
 if not DATA_FILE.exists():
     DATA_FILE.write_text('{}')
 
-# Load settings
-with open(Path(__file__).parent / 'settings.js', 'r') as f:
-    settings_content = f.read()
-    # Simple JSON extraction (assuming settings.js exports a JS object)
-    settings_start = settings_content.find('{')
-    settings_end = settings_content.rfind('}') + 1
-    settings_json = settings_content[settings_start:settings_end]
-    settings = json.loads(settings_json)
+# Load settings from JSON file
+def load_settings():
+    settings_file = Path(__file__).parent / 'settings.json'
+    try:
+        with open(settings_file, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"⚠️ Could not load settings.json: {e}")
+        print("Using default settings...")
+        return {
+            'port': 5000,
+            'data': {'file': 'data/habits_data.json'},
+            'habits': ['Brush teeth', 'Floss'],
+            'module': {
+                'updateInterval': 60000,
+                'showCompletedCount': True,
+                'showProgressBar': True
+            }
+        }
+
+settings = load_settings()
 
 class TestService:
     """Test service that sends random numbers"""
