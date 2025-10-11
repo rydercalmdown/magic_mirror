@@ -18,6 +18,15 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import socketio
 
+# Ensure compatible async networking for Socket.IO (WebSocket support)
+try:
+    import eventlet
+    import eventlet.wsgi
+    eventlet.monkey_patch()
+except Exception as _e:
+    # If eventlet is not available, the server will fall back later
+    pass
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
