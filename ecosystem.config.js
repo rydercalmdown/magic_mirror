@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'magic-mirror-backend',
       script: './backend.py',
-      interpreter: 'python3',
+      interpreter: './venv/bin/python',
       instances: 1,
       autorestart: true,
       watch: false,
