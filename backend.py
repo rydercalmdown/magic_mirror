@@ -90,12 +90,19 @@ class ActionRecognizer:
         self.emit_interval = 0.5  # seconds between CURRENT_ACTION emits
         # Try to import pipeline from training
         self.pipeline = None
+        self.training_dir = (Path(__file__).parent / 'training').resolve()
         try:
             # Lazy import to avoid heavy deps if missing
-            sys.path.append(str((Path(__file__).parent / 'training').resolve()))
-            from realtime_inference import RealtimeInference  # type: ignore
-            self.pipeline = RealtimeInference(models_path=str(models_dir))
-            print("🤖 ActionRecognizer: Loaded training pipeline")
+            sys.path.append(str(self.training_dir))
+            from realtime_inference import ActionRecognizer as TrainingActionRecognizer  # type: ignore
+            # Ensure relative model paths inside training code resolve
+            prev_cwd = os.getcwd()
+            try:
+                os.chdir(self.training_dir)
+                self.pipeline = TrainingActionRecognizer(model_path=str(self.models_dir / 'action_recognition_model.pth'))
+                print("🤖 ActionRecognizer: Loaded training pipeline from", self.training_dir)
+            finally:
+                os.chdir(prev_cwd)
         except Exception as e:
             print(f"⚠️ ActionRecognizer: Could not load training pipeline: {e}")
             self.enabled = False
@@ -105,7 +112,12 @@ class ActionRecognizer:
             return
         try:
             # Use training pipeline API
+            # Switch to training dir so its relative paths (models/*) work during mediapipe run if needed
+            prev_cwd = os.getcwd()
+            os.chdir(self.training_dir)
             action_label, conf, _ = self.pipeline.process_frame(frame_bgr)
+            os.chdir(prev_cwd)
+            print(f"🤖 ActionRecognizer: processed frame -> {action_label} (conf={conf:.2f})")
             # Optional: only accept confident labels
             if action_label in (None, 'no_action', 'collecting_data'):
                 action_label = None
@@ -121,6 +133,7 @@ class ActionRecognizer:
         if action_label != self.current_action or (now - self.last_emit_time) >= self.emit_interval:
             self.current_action = action_label
             self.last_emit_time = now
+            print(f"🤖 ActionRecognizer: emitting CURRENT_ACTION: {self.current_action}")
             sio.emit('currentAction', {
                 'label': self.current_action
             })
