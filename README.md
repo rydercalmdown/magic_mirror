@@ -95,9 +95,11 @@ This will install dependencies, set up PM2, and start the backend daemon.
 
 All setup and utility scripts are located in the `scripts/` directory:
 
-- `scripts/setup-backend.sh` - Main automated setup script
-- `scripts/setup-systemd.sh` - Systemd service setup
+- `scripts/setup-backend.sh` - Main automated setup script (portable across systems)
+- `scripts/setup-systemd.sh` - Systemd service setup (portable across systems)
 - `scripts/start-backend.sh` - Simple backend startup script
+
+**Note:** All scripts automatically detect their location and work on any system (macOS, Linux, Raspberry Pi, etc.).
 
 The backend will run on `http://localhost:5000` by default.
 

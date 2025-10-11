@@ -3,10 +3,13 @@
 # Comprehensive setup script for Magic Mirror Backend
 # This script installs dependencies, sets up PM2, and optionally configures systemd
 
-PROJECT_DIR="/Users/ryder/Code/rydercalmdown/magic_mirror"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BACKEND_APP_NAME="magic-mirror-backend"
 
 echo "🚀 Setting up Magic Mirror Backend..."
+echo "📁 Project directory: $PROJECT_DIR"
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -20,9 +23,11 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+# Change to project directory
+cd "$PROJECT_DIR"
+
 # Install backend dependencies
 echo "📦 Installing backend dependencies..."
-cd "$PROJECT_DIR"
 npm install express cors
 
 # Install PM2 globally if not already installed

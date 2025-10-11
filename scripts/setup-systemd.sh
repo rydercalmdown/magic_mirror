@@ -3,11 +3,14 @@
 # Setup script for Magic Mirror Backend systemd service
 # This script installs the systemd service for auto-start on boot
 
-PROJECT_DIR="/Users/ryder/Code/rydercalmdown/magic_mirror"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 SERVICE_FILE="magic-mirror-backend.service"
 SYSTEMD_DIR="/etc/systemd/system"
 
 echo "Setting up Magic Mirror Backend systemd service..."
+echo "📁 Project directory: $PROJECT_DIR"
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
