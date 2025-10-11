@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'magic-mirror-backend',
-      script: './backend.js',
+      script: './backend.py',
+      interpreter: 'python3',
       instances: 1,
       autorestart: true,
       watch: false,

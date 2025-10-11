@@ -10,7 +10,9 @@ install:
 	@echo "🚀 Installing dependencies and setting up backend..."
 	@echo "📦 Installing system dependencies..."
 	@bash ./scripts/install-deps.sh
-	@echo "📦 Installing Node.js and OpenCV dependencies..."
+	@echo "📦 Installing Python dependencies..."
+	@bash ./scripts/install-python-deps.sh
+	@echo "📦 Installing Node.js dependencies..."
 	@bash ./scripts/install-opencv.sh
 	@echo "🔧 Setting up backend daemon..."
 	@bash ./scripts/setup-backend.sh
