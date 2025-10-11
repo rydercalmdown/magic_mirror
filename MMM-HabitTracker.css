@@ -13,12 +13,22 @@
     margin-bottom: 20px;
 }
 
-.habit-header h2 {
-    margin: 0;
+.habit-header h1 {
+    margin: 0 0 8px 0;
     color: #fff;
-    font-size: 1.5em;
-    font-weight: 300;
+    font-size: 2.2em;
+    font-weight: 600;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+}
+
+.habit-header h3 {
+    margin: 0;
+    color: #B0BEC5;
+    font-size: 1.1em;
+    font-weight: 300;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
 }
 
 .habit-progress {

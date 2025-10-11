@@ -41,7 +41,7 @@
   },
   "magicmirror": {
     "module": "MMM-HabitTracker",
-    "position": "top_right",
+    "position": "center",
     "config": {
       "updateInterval": 60000,
       "habits": [
