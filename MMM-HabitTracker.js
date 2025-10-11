@@ -301,6 +301,18 @@ Module.register("MMM-HabitTracker", {
         `;
         wrapper.appendChild(personDiv);
 
+        // Live webcam preview via MJPEG stream
+        const streamUrl = this.config.backendUrl.replace(/\/$/, '') + "/stream";
+        const img = document.createElement('img');
+        img.src = streamUrl;
+        img.alt = 'Webcam stream';
+        img.style.display = 'block';
+        img.style.marginTop = '10px';
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        img.style.opacity = '0.9';
+        wrapper.appendChild(img);
+
         return wrapper;
     },
 

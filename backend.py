@@ -14,7 +14,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 import socketio
 
@@ -130,6 +130,7 @@ class WebcamMonitor:
         self.person_detected = False
         self.last_detection_time = None
         self.last_seen_time = None  # last frame timestamp where a person was seen
+        self.latest_jpeg = None  # last encoded JPEG frame bytes for streaming
         
         # Load Haar cascades
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -179,7 +180,15 @@ class WebcamMonitor:
                 time.sleep(1)
                 continue
             
-            # Convert to grayscale
+            # Encode and store latest JPEG for the stream (quality 70)
+            try:
+                ok, jpg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                if ok:
+                    self.latest_jpeg = jpg.tobytes()
+            except Exception as _:
+                pass
+
+            # Convert to grayscale for detection
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
             person_found = False
@@ -210,10 +219,10 @@ class WebcamMonitor:
                     # already detected; refresh timestamps
                     self.last_detection_time = now_dt
             else:
-                # no person in this frame; only flip to not detected if >2s since last_seen
+                # no person in this frame; only flip to not detected if >3s since last_seen
                 if self.person_detected and self.last_seen_time is not None:
                     delta = (now_dt - self.last_seen_time).total_seconds()
-                    if delta > 2.0:
+                    if delta > 3.0:
                         self.person_detected = False
                         print("👤 Person detection: NOT DETECTED")
                         sio.emit('personDetection', {
@@ -374,6 +383,34 @@ def stop_webcam():
 @app.route('/api/webcam/status')
 def webcam_status():
     return jsonify(webcam_monitor.get_status())
+
+# MJPEG stream endpoint for live preview
+@app.route('/stream')
+def stream():
+    boundary = 'frame'
+
+    def generate():
+        # prepare a fallback black frame if none available yet
+        fallback = None
+        try:
+            black = np.zeros((480, 640, 3), dtype=np.uint8)
+            ok, bj = cv2.imencode('.jpg', black, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+            if ok:
+                fallback = bj.tobytes()
+        except Exception:
+            fallback = None
+
+        while True:
+            frame_bytes = webcam_monitor.latest_jpeg or fallback
+            if frame_bytes is None:
+                time.sleep(0.1)
+                continue
+            yield (b"--" + boundary.encode() + b"\r\n"
+                   b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
+            # target ~10 fps stream
+            time.sleep(0.1)
+
+    return Response(generate(), mimetype=f"multipart/x-mixed-replace; boundary={boundary}")
 
 if __name__ == '__main__':
     print(f"🚀 Habit Tracker Backend running on port {PORT}")
