@@ -1,18 +1,15 @@
 # Makefile for Magic Mirror project
 
 # Variables
-FRONTEND_DIR = frontend
 BACKEND_APP_NAME = magic-mirror-backend
 
-.PHONY: install run frontend clean start-backend stop-backend restart-backend status-backend logs-backend setup-backend-daemon setup setup-systemd
+.PHONY: install run clean start-backend stop-backend restart-backend status-backend logs-backend setup-backend-daemon setup setup-systemd
 
 # Install all dependencies and setup backend
 install:
-	@echo "🚀 Installing all dependencies and setting up backend..."
+	@echo "🚀 Installing dependencies and setting up backend..."
 	@echo "📦 Installing backend dependencies..."
 	npm install express cors
-	@echo "📦 Installing frontend dependencies..."
-	cd $(FRONTEND_DIR) && npm install
 	@echo "🔧 Setting up backend daemon..."
 	@./scripts/setup-backend.sh
 	@echo "✅ Installation and setup complete! Backend is running and ready to use."
@@ -23,11 +20,6 @@ run:
 	@docker-compose up -d --build # Build images if they don't exist and start in detached mode
 	@echo "Backend services started. Flask API likely at http://localhost:5001"
 
-# Run the frontend development server
-frontend:
-	@echo "Starting frontend development server..."
-	cd $(FRONTEND_DIR) && npm run dev
-	@echo "Frontend server accessible at http://localhost:3000 (usually)"
 
 # Backend daemon management
 start-backend:
@@ -71,11 +63,10 @@ setup-systemd:
 	@sudo ./scripts/setup-systemd.sh
 	@echo "Systemd service installed and enabled."
 
-# Clean up Docker Compose resources
+# Clean up resources
 clean:
 	@echo "Stopping and removing backend containers and network..."
 	@docker-compose down -v --remove-orphans # Stop, remove containers, network, and volumes
-	@echo "Cleaning frontend node_modules..."
-	@rm -rf $(FRONTEND_DIR)/node_modules
-	@rm -rf $(FRONTEND_DIR)/.next
+	@echo "Cleaning node_modules..."
+	@rm -rf node_modules
 	@echo "Cleanup complete." 
