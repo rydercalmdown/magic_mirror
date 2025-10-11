@@ -9,7 +9,7 @@ BACKEND_APP_NAME = magic-mirror-backend
 install:
 	@echo "🚀 Installing dependencies and setting up backend..."
 	@echo "📦 Installing backend dependencies..."
-	npm install express cors
+	npm install express cors socket.io opencv4nodejs
 	@echo "🔧 Setting up backend daemon..."
 	@./scripts/setup-backend.sh
 	@echo "✅ Installation and setup complete! Backend is running and ready to use."

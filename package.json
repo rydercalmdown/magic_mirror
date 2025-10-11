@@ -34,7 +34,9 @@
   "homepage": "https://github.com/rydercalmdown/magic_mirror#readme",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "socket.io": "^4.7.5",
+    "opencv4nodejs": "^5.6.0"
   },
   "engines": {
     "node": ">=14.0.0"

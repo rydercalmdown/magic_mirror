@@ -8,6 +8,8 @@ Module.register("MMM-HabitTracker", {
     habits: [],
     lastUpdateDate: null,
     settings: null,
+    socket: null,
+    personDetected: false,
 
     // Start the module
     start: function() {
@@ -15,7 +17,51 @@ Module.register("MMM-HabitTracker", {
         Log.info("📋 MMM-HabitTracker: Config - " + JSON.stringify(this.config));
         Log.info("🌐 MMM-HabitTracker: Backend URL - " + this.config.backendUrl);
         this.loadSettings();
+        this.initWebSocket();
         Log.info("✅ MMM-HabitTracker: Module started successfully");
+    },
+
+    // Initialize WebSocket connection
+    initWebSocket: function() {
+        try {
+            // Import socket.io client (this will be loaded in the browser)
+            const script = document.createElement('script');
+            script.src = this.config.backendUrl + '/socket.io/socket.io.js';
+            script.onload = () => {
+                this.socket = io(this.config.backendUrl);
+                this.setupWebSocketEvents();
+            };
+            document.head.appendChild(script);
+        } catch (error) {
+            Log.error("❌ MMM-HabitTracker: WebSocket initialization failed - " + error.message);
+        }
+    },
+
+    // Setup WebSocket event handlers
+    setupWebSocketEvents: function() {
+        if (!this.socket) return;
+
+        this.socket.on('connect', () => {
+            Log.info("🔌 MMM-HabitTracker: WebSocket connected");
+        });
+
+        this.socket.on('disconnect', () => {
+            Log.warn("🔌 MMM-HabitTracker: WebSocket disconnected");
+        });
+
+        this.socket.on('personDetection', (data) => {
+            this.personDetected = data.detected;
+            Log.info(`👤 MMM-HabitTracker: Person ${data.detected ? 'detected' : 'not detected'}`);
+            this.updateDom();
+        });
+
+        this.socket.on('webcamStatus', (status) => {
+            Log.info("📹 MMM-HabitTracker: Webcam status - " + JSON.stringify(status));
+        });
+
+        this.socket.on('webcamError', (error) => {
+            Log.error("❌ MMM-HabitTracker: Webcam error - " + error.message);
+        });
     },
 
     // Load settings from backend
@@ -211,6 +257,15 @@ Module.register("MMM-HabitTracker", {
         }
 
         wrapper.appendChild(habitsList);
+
+        // Person detection status
+        const statusDiv = document.createElement("div");
+        statusDiv.className = "person-status";
+        statusDiv.innerHTML = `
+            <div class="status-indicator ${this.personDetected ? 'detected' : 'not-detected'}"></div>
+            <div class="status-text">${this.personDetected ? 'Person detected' : 'Person not detected'}</div>
+        `;
+        wrapper.appendChild(statusDiv);
 
         return wrapper;
     },

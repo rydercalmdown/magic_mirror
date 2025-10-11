@@ -1,11 +1,22 @@
-// Simple Node.js backend for habit tracking
+// Backend for habit tracking and webcam monitoring
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const settings = require('./settings');
+const WebcamMonitor = require('./services/webcam-monitor');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
 const PORT = process.env.PORT || settings.port;
 
 // Middleware
@@ -25,6 +36,45 @@ if (!fs.existsSync(DATA_DIR)) {
 if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify({}));
 }
+
+// Initialize webcam monitor
+const webcamMonitor = new WebcamMonitor({
+    cameraIndex: 0,
+    detectionInterval: 1000 // Check every second
+});
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+    console.log('🔌 Client connected:', socket.id);
+    
+    // Send current webcam status
+    socket.emit('webcamStatus', webcamMonitor.getStatus());
+    
+    socket.on('disconnect', () => {
+        console.log('🔌 Client disconnected:', socket.id);
+    });
+});
+
+// Webcam monitor event handlers
+webcamMonitor.on('detectionChange', (data) => {
+    console.log(`👤 Person detection: ${data.detected ? 'DETECTED' : 'NOT DETECTED'}`);
+    io.emit('personDetection', data);
+});
+
+webcamMonitor.on('error', (error) => {
+    console.error('❌ Webcam Monitor Error:', error.message);
+    io.emit('webcamError', { message: error.message });
+});
+
+webcamMonitor.on('started', () => {
+    console.log('✅ Webcam Monitor started successfully');
+    io.emit('webcamStatus', webcamMonitor.getStatus());
+});
+
+webcamMonitor.on('stopped', () => {
+    console.log('🛑 Webcam Monitor stopped');
+    io.emit('webcamStatus', webcamMonitor.getStatus());
+});
 
 // Load habits data
 function loadHabitsData() {
@@ -100,20 +150,52 @@ app.get('/api/settings', (req, res) => {
     });
 });
 
+// Webcam control endpoints
+app.post('/api/webcam/start', (req, res) => {
+    webcamMonitor.start();
+    res.json({ success: true, message: 'Webcam monitoring started' });
+});
+
+app.post('/api/webcam/stop', (req, res) => {
+    webcamMonitor.stop();
+    res.json({ success: true, message: 'Webcam monitoring stopped' });
+});
+
+app.get('/api/webcam/status', (req, res) => {
+    res.json(webcamMonitor.getStatus());
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'healthy', 
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        webcam: webcamMonitor.getStatus()
     });
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Habit Tracker Backend running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/api/health`);
-    console.log(`Habits API: http://localhost:${PORT}/api/habits`);
+server.listen(PORT, () => {
+    console.log(`🚀 Habit Tracker Backend running on port ${PORT}`);
+    console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📋 Habits API: http://localhost:${PORT}/api/habits`);
+    console.log(`📹 Webcam API: http://localhost:${PORT}/api/webcam/status`);
+    console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
+    
+    // Start webcam monitoring automatically
+    console.log(`📹 Starting webcam monitoring...`);
+    webcamMonitor.start();
 });
 
-module.exports = app;
+// Graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n🛑 Shutting down gracefully...');
+    webcamMonitor.stop();
+    server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+    });
+});
+
+module.exports = { app, server, webcamMonitor };
