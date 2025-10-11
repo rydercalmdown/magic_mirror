@@ -9,3 +9,8 @@ sudo apt install -y libjpeg-dev libtiff5-dev libpng-dev
 sudo apt install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt install -y libxvidcore-dev libx264-dev
 sudo apt install -y libgtk-3-dev libatlas-base-dev gfortran
+
+# Install USB webcam support
+sudo apt install -y v4l-utils
+
+echo "✅ OpenCV and dependencies installed"

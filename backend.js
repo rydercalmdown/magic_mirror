@@ -6,7 +6,7 @@ const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
 const settings = require('./settings');
-const WebcamMonitor = require('./services/webcam-monitor');
+const TestService = require('./services/test-service');
 
 const app = express();
 const server = http.createServer(app);
@@ -37,43 +37,38 @@ if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify({}));
 }
 
-// Initialize webcam monitor
-const webcamMonitor = new WebcamMonitor({
-    cameraIndex: 0,
-    detectionInterval: 1000 // Check every second
+// Initialize test service
+const testService = new TestService({
+    minInterval: 1000, // 1 second
+    maxInterval: 5000  // 5 seconds
 });
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
     console.log('🔌 Client connected:', socket.id);
     
-    // Send current webcam status
-    socket.emit('webcamStatus', webcamMonitor.getStatus());
+    // Send current test service status
+    socket.emit('testStatus', testService.getStatus());
     
     socket.on('disconnect', () => {
         console.log('🔌 Client disconnected:', socket.id);
     });
 });
 
-// Webcam monitor event handlers
-webcamMonitor.on('detectionChange', (data) => {
-    console.log(`👤 Person detection: ${data.detected ? 'DETECTED' : 'NOT DETECTED'}`);
-    io.emit('personDetection', data);
+// Test service event handlers
+testService.on('randomNumber', (data) => {
+    console.log(`🧪 Test Service: Sending random number ${data.number} to frontend`);
+    io.emit('randomNumber', data);
 });
 
-webcamMonitor.on('error', (error) => {
-    console.error('❌ Webcam Monitor Error:', error.message);
-    io.emit('webcamError', { message: error.message });
+testService.on('started', () => {
+    console.log('✅ Test Service started successfully');
+    io.emit('testStatus', testService.getStatus());
 });
 
-webcamMonitor.on('started', () => {
-    console.log('✅ Webcam Monitor started successfully');
-    io.emit('webcamStatus', webcamMonitor.getStatus());
-});
-
-webcamMonitor.on('stopped', () => {
-    console.log('🛑 Webcam Monitor stopped');
-    io.emit('webcamStatus', webcamMonitor.getStatus());
+testService.on('stopped', () => {
+    console.log('🛑 Test Service stopped');
+    io.emit('testStatus', testService.getStatus());
 });
 
 // Load habits data
@@ -150,19 +145,19 @@ app.get('/api/settings', (req, res) => {
     });
 });
 
-// Webcam control endpoints
-app.post('/api/webcam/start', (req, res) => {
-    webcamMonitor.start();
-    res.json({ success: true, message: 'Webcam monitoring started' });
+// Test service control endpoints
+app.post('/api/test/start', (req, res) => {
+    testService.start();
+    res.json({ success: true, message: 'Test service started' });
 });
 
-app.post('/api/webcam/stop', (req, res) => {
-    webcamMonitor.stop();
-    res.json({ success: true, message: 'Webcam monitoring stopped' });
+app.post('/api/test/stop', (req, res) => {
+    testService.stop();
+    res.json({ success: true, message: 'Test service stopped' });
 });
 
-app.get('/api/webcam/status', (req, res) => {
-    res.json(webcamMonitor.getStatus());
+app.get('/api/test/status', (req, res) => {
+    res.json(testService.getStatus());
 });
 
 // Health check endpoint
@@ -171,7 +166,7 @@ app.get('/api/health', (req, res) => {
         status: 'healthy', 
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        webcam: webcamMonitor.getStatus()
+        test: testService.getStatus()
     });
 });
 
@@ -180,22 +175,22 @@ server.listen(PORT, () => {
     console.log(`🚀 Habit Tracker Backend running on port ${PORT}`);
     console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
     console.log(`📋 Habits API: http://localhost:${PORT}/api/habits`);
-    console.log(`📹 Webcam API: http://localhost:${PORT}/api/webcam/status`);
+    console.log(`🧪 Test API: http://localhost:${PORT}/api/test/status`);
     console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
     
-    // Start webcam monitoring automatically
-    console.log(`📹 Starting webcam monitoring...`);
-    webcamMonitor.start();
+    // Start test service automatically
+    console.log(`🧪 Starting test service...`);
+    testService.start();
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down gracefully...');
-    webcamMonitor.stop();
+    testService.stop();
     server.close(() => {
         console.log('✅ Server closed');
         process.exit(0);
     });
 });
 
-module.exports = { app, server, webcamMonitor };
+module.exports = { app, server, testService };

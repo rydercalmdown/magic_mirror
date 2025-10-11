@@ -10,6 +10,7 @@ Module.register("MMM-HabitTracker", {
     settings: null,
     socket: null,
     personDetected: false,
+    randomNumber: 0,
 
     // Start the module
     start: function() {
@@ -49,18 +50,14 @@ Module.register("MMM-HabitTracker", {
             Log.warn("🔌 MMM-HabitTracker: WebSocket disconnected");
         });
 
-        this.socket.on('personDetection', (data) => {
-            this.personDetected = data.detected;
-            Log.info(`👤 MMM-HabitTracker: Person ${data.detected ? 'detected' : 'not detected'}`);
+        this.socket.on('randomNumber', (data) => {
+            this.randomNumber = data.number;
+            Log.info(`🧪 MMM-HabitTracker: Received random number: ${data.number}`);
             this.updateDom();
         });
 
-        this.socket.on('webcamStatus', (status) => {
-            Log.info("📹 MMM-HabitTracker: Webcam status - " + JSON.stringify(status));
-        });
-
-        this.socket.on('webcamError', (error) => {
-            Log.error("❌ MMM-HabitTracker: Webcam error - " + error.message);
+        this.socket.on('testStatus', (status) => {
+            Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(status));
         });
     },
 
@@ -258,14 +255,14 @@ Module.register("MMM-HabitTracker", {
 
         wrapper.appendChild(habitsList);
 
-        // Person detection status
-        const statusDiv = document.createElement("div");
-        statusDiv.className = "person-status";
-        statusDiv.innerHTML = `
-            <div class="status-indicator ${this.personDetected ? 'detected' : 'not-detected'}"></div>
-            <div class="status-text">${this.personDetected ? 'Person detected' : 'Person not detected'}</div>
+        // Random number display
+        const numberDiv = document.createElement("div");
+        numberDiv.className = "random-number";
+        numberDiv.innerHTML = `
+            <div class="number-label">Test Number:</div>
+            <div class="number-value">${this.randomNumber}</div>
         `;
-        wrapper.appendChild(statusDiv);
+        wrapper.appendChild(numberDiv);
 
         return wrapper;
     },
