@@ -25,6 +25,9 @@ Module.register("MMM-HabitTracker", {
             backendUrl: this.config.backendUrl
         });
         
+        // Load settings and habits
+        this.loadSettings();
+        
         Log.info("✅ MMM-HabitTracker: Module started successfully");
     },
 
@@ -37,8 +40,9 @@ Module.register("MMM-HabitTracker", {
                 this.settings = payload;
                 Log.info("✅ MMM-HabitTracker: Settings loaded - " + payload.habits.length + " habits");
                 this.loadHabits();
+                this.scheduleUpdate();
             } else {
-                Log.error("❌ MMM-HabitTracker: Failed to load settings");
+                Log.error("❌ MMM-HabitTracker: Failed to load settings - " + JSON.stringify(payload));
             }
         } else if (notification === "HABITS_LOADED") {
             if (payload && payload.habits) {
@@ -46,14 +50,7 @@ Module.register("MMM-HabitTracker", {
                 Log.info("✅ MMM-HabitTracker: Loaded " + this.habits.length + " habits from backend");
                 Log.info("📋 MMM-HabitTracker: Habits - " + JSON.stringify(this.habits.map(h => h.name)));
             } else {
-                // Initialize with default habits if none loaded
-                Log.warn("⚠️ MMM-HabitTracker: No habits from backend, using settings");
-                const habitsList = this.settings ? this.settings.habits : ["Loading habits..."];
-                this.habits = habitsList.map(habit => ({
-                    name: habit,
-                    completed: false,
-                    date: this.getTodayString()
-                }));
+                Log.error("❌ MMM-HabitTracker: No habits from backend - " + JSON.stringify(payload));
             }
             this.updateDom();
         } else if (notification === "HABITS_SAVED") {
@@ -90,17 +87,32 @@ Module.register("MMM-HabitTracker", {
         
         this.lastUpdateDate = today;
         
-        // Try to load from backend first
-        Log.info("🌐 MMM-HabitTracker: Requesting habits from backend - " + this.config.backendUrl + "/api/habits");
-        this.sendSocketNotification("LOAD_HABITS", {
-            url: this.config.backendUrl + "/api/habits",
-            date: today
-        });
+        // If we have settings, use them to initialize habits
+        if (this.settings && this.settings.habits) {
+            Log.info("📋 MMM-HabitTracker: Using settings habits - " + this.settings.habits.length + " habits");
+            this.habits = this.settings.habits.map(habit => ({
+                name: habit,
+                completed: false,
+                date: today
+            }));
+            this.updateDom();
+        } else {
+            // Try to load from backend
+            Log.info("🌐 MMM-HabitTracker: Requesting habits from backend - " + this.config.backendUrl + "/api/habits");
+            this.sendSocketNotification("LOAD_HABITS", {
+                url: this.config.backendUrl + "/api/habits",
+                date: today
+            });
+        }
     },
 
     // Reset habits for a new day
     resetHabitsForNewDay: function() {
-        this.habits = this.config.habits.map(habit => ({
+        if (!this.settings || !this.settings.habits) {
+            Log.error("❌ MMM-HabitTracker: Cannot reset habits - no settings available");
+            return;
+        }
+        this.habits = this.settings.habits.map(habit => ({
             name: habit,
             completed: false,
             date: this.getTodayString()
@@ -165,14 +177,7 @@ Module.register("MMM-HabitTracker", {
                 Log.info("✅ MMM-HabitTracker: Loaded " + this.habits.length + " habits from backend");
                 Log.info("📋 MMM-HabitTracker: Habits - " + JSON.stringify(this.habits.map(h => h.name)));
             } else {
-                // Initialize with default habits if none loaded
-                Log.warn("⚠️ MMM-HabitTracker: No habits from backend, using settings");
-                const habitsList = this.settings ? this.settings.habits : ["Loading habits..."];
-                this.habits = habitsList.map(habit => ({
-                    name: habit,
-                    completed: false,
-                    date: this.getTodayString()
-                }));
+                Log.error("❌ MMM-HabitTracker: No habits from backend - " + JSON.stringify(payload));
             }
             this.updateDom();
         } else if (notification === "HABITS_SAVED") {
