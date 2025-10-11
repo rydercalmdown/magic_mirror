@@ -27,7 +27,9 @@ sio = socketio.Server(
     cors_allowed_origins="*",
     logger=True,
     engineio_logger=True,
-    async_mode='eventlet'
+    async_mode='eventlet',
+    ping_interval=25,
+    ping_timeout=60
 )
 flask_app = socketio.WSGIApp(sio, app)
 
@@ -252,6 +254,13 @@ def connect(sid, environ):
     print(f'🔌 Client connected: {sid}')
     sio.emit('testStatus', test_service.get_status())
     sio.emit('webcamStatus', webcam_monitor.get_status())
+    # Emit an initial random number to update UI immediately
+    try:
+        import random
+        initial = random.randint(10, 99)
+        sio.emit('randomNumber', {'number': initial, 'timestamp': datetime.now().isoformat()}, room=sid)
+    except Exception as e:
+        print(f"⚠️ Could not emit initial random number: {e}")
 
 @sio.event
 def disconnect(sid):

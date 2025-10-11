@@ -74,3 +74,8 @@ clean:
 	@echo "Cleaning node_modules..."
 	@rm -rf node_modules
 	@echo "Cleanup complete." 
+
+restart:
+	@pm2 restart magic-mirror-backend
+	@pm2 restart magic-mirror
+	@sudo reboot
