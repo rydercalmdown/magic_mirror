@@ -3,6 +3,6 @@
 
 {
     module: "MMM-HabitTracker",
-    position: "center"
+    position: "middle_center"
 }
 
