@@ -9,6 +9,7 @@ Module.register("MMM-HabitTracker", {
     lastUpdateDate: null,
     settings: null,
     randomNumber: 0,
+    personDetected: false,
 
     // Start the module
     start: function() {
@@ -63,6 +64,14 @@ Module.register("MMM-HabitTracker", {
             this.updateDom();
         } else if (notification === "TEST_STATUS") {
             Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(payload));
+        } else if (notification === "PERSON_DETECTION") {
+            this.personDetected = payload.detected;
+            Log.info(`👤 MMM-HabitTracker: Person ${payload.detected ? 'detected' : 'not detected'}`);
+            this.updateDom();
+        } else if (notification === "WEBCAM_STATUS") {
+            Log.info("📹 MMM-HabitTracker: Webcam status - " + JSON.stringify(payload));
+        } else if (notification === "WEBCAM_ERROR") {
+            Log.error("❌ MMM-HabitTracker: Webcam error - " + JSON.stringify(payload));
         }
     },
 
@@ -190,6 +199,14 @@ Module.register("MMM-HabitTracker", {
             this.updateDom();
         } else if (notification === "TEST_STATUS") {
             Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(payload));
+        } else if (notification === "PERSON_DETECTION") {
+            this.personDetected = payload.detected;
+            Log.info(`👤 MMM-HabitTracker: Person ${payload.detected ? 'detected' : 'not detected'}`);
+            this.updateDom();
+        } else if (notification === "WEBCAM_STATUS") {
+            Log.info("📹 MMM-HabitTracker: Webcam status - " + JSON.stringify(payload));
+        } else if (notification === "WEBCAM_ERROR") {
+            Log.error("❌ MMM-HabitTracker: Webcam error - " + JSON.stringify(payload));
         }
     },
 
@@ -274,6 +291,15 @@ Module.register("MMM-HabitTracker", {
             <div class="number-value">${this.randomNumber}</div>
         `;
         wrapper.appendChild(numberDiv);
+
+        // Person detection status
+        const personDiv = document.createElement("div");
+        personDiv.className = "person-status";
+        personDiv.innerHTML = `
+            <div class="status-indicator ${this.personDetected ? 'detected' : 'not-detected'}"></div>
+            <div class="status-text">${this.personDetected ? 'Person detected' : 'Person not detected'}</div>
+        `;
+        wrapper.appendChild(personDiv);
 
         return wrapper;
     },

@@ -60,6 +60,21 @@ module.exports = NodeHelper.create({
             this.sendSocketNotification("TEST_STATUS", status);
         });
 
+        this.backendSocket.on('personDetection', (data) => {
+            console.log("👤 MMM-HabitTracker: Person detection from backend: " + data.detected);
+            this.sendSocketNotification("PERSON_DETECTION", data);
+        });
+
+        this.backendSocket.on('webcamStatus', (status) => {
+            console.log("📹 MMM-HabitTracker: Backend webcam status: " + JSON.stringify(status));
+            this.sendSocketNotification("WEBCAM_STATUS", status);
+        });
+
+        this.backendSocket.on('webcamError', (error) => {
+            console.error("❌ MMM-HabitTracker: Backend webcam error: " + error.message);
+            this.sendSocketNotification("WEBCAM_ERROR", error);
+        });
+
         this.backendSocket.on('connect_error', (error) => {
             console.error("❌ MMM-HabitTracker: Backend connection error: " + error.message);
             this.sendSocketNotification("TEST_STATUS", { connected: false, error: error.message });

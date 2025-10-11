@@ -127,6 +127,43 @@
     }
 }
 
+/* Person detection status */
+.person-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    transition: all 0.3s ease;
+}
+
+.status-indicator.detected {
+    background: #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.status-indicator.not-detected {
+    background: #B0BEC5;
+    opacity: 0.6;
+}
+
+.status-text {
+    color: #fff;
+    font-size: 0.9em;
+    font-weight: 300;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 /* Animation for completed habits */
 .habit-item.completed {
     animation: completeHabit 0.3s ease;

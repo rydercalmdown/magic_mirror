@@ -7,6 +7,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const settings = require('./settings');
 const TestService = require('./services/test-service');
+const WebcamMonitor = require('./services/webcam-monitor');
 
 const app = express();
 const server = http.createServer(app);
@@ -43,6 +44,12 @@ const testService = new TestService({
     maxInterval: 5000  // 5 seconds
 });
 
+// Initialize webcam monitor
+const webcamMonitor = new WebcamMonitor({
+    cameraIndex: 0,
+    detectionInterval: 2000 // Check every 2 seconds
+});
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
     console.log('🔌 Client connected:', socket.id);
@@ -69,6 +76,27 @@ testService.on('started', () => {
 testService.on('stopped', () => {
     console.log('🛑 Test Service stopped');
     io.emit('testStatus', testService.getStatus());
+});
+
+// Webcam monitor event handlers
+webcamMonitor.on('detectionChange', (data) => {
+    console.log(`👤 Person detection: ${data.detected ? 'DETECTED' : 'NOT DETECTED'}`);
+    io.emit('personDetection', data);
+});
+
+webcamMonitor.on('error', (error) => {
+    console.error('❌ Webcam Monitor Error:', error.message);
+    io.emit('webcamError', { message: error.message });
+});
+
+webcamMonitor.on('started', () => {
+    console.log('✅ Webcam Monitor started successfully');
+    io.emit('webcamStatus', webcamMonitor.getStatus());
+});
+
+webcamMonitor.on('stopped', () => {
+    console.log('🛑 Webcam Monitor stopped');
+    io.emit('webcamStatus', webcamMonitor.getStatus());
 });
 
 // Load habits data
@@ -160,13 +188,29 @@ app.get('/api/test/status', (req, res) => {
     res.json(testService.getStatus());
 });
 
+// Webcam control endpoints
+app.post('/api/webcam/start', (req, res) => {
+    webcamMonitor.start();
+    res.json({ success: true, message: 'Webcam monitoring started' });
+});
+
+app.post('/api/webcam/stop', (req, res) => {
+    webcamMonitor.stop();
+    res.json({ success: true, message: 'Webcam monitoring stopped' });
+});
+
+app.get('/api/webcam/status', (req, res) => {
+    res.json(webcamMonitor.getStatus());
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'healthy', 
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        test: testService.getStatus()
+        test: testService.getStatus(),
+        webcam: webcamMonitor.getStatus()
     });
 });
 
@@ -182,16 +226,16 @@ server.listen(PORT, () => {
     console.log(`🧪 Starting test service...`);
     testService.start();
     
-    // Also start it immediately for testing
-    setTimeout(() => {
-        testService.start();
-    }, 2000);
+    // Start webcam monitoring automatically
+    console.log(`📹 Starting webcam monitoring...`);
+    webcamMonitor.start();
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down gracefully...');
     testService.stop();
+    webcamMonitor.stop();
     server.close(() => {
         console.log('✅ Server closed');
         process.exit(0);
