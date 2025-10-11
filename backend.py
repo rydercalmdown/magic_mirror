@@ -271,7 +271,7 @@ class WebcamMonitor:
 
 # Initialize services
 test_service = TestService(min_interval=1, max_interval=5)
-webcam_monitor = WebcamMonitor(camera_index=0, detection_interval=2)
+webcam_monitor = WebcamMonitor(camera_index=0, detection_interval=0.33)
 
 # Socket.IO event handlers
 @sio.event
