@@ -181,6 +181,11 @@ server.listen(PORT, () => {
     // Start test service automatically
     console.log(`🧪 Starting test service...`);
     testService.start();
+    
+    // Also start it immediately for testing
+    setTimeout(() => {
+        testService.start();
+    }, 2000);
 });
 
 // Graceful shutdown

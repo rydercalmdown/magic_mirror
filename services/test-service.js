@@ -19,9 +19,11 @@ class TestService extends EventEmitter {
         }
 
         this.isRunning = true;
-        this.scheduleNext();
         console.log("🧪 Test Service: Started sending random numbers");
         this.emit('started');
+        
+        // Start immediately
+        this.scheduleNext();
     }
 
     stop() {

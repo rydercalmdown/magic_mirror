@@ -8,8 +8,6 @@ Module.register("MMM-HabitTracker", {
     habits: [],
     lastUpdateDate: null,
     settings: null,
-    socket: null,
-    personDetected: false,
     randomNumber: 0,
 
     // Start the module
@@ -17,48 +15,58 @@ Module.register("MMM-HabitTracker", {
         Log.info("🚀 MMM-HabitTracker: Starting module");
         Log.info("📋 MMM-HabitTracker: Config - " + JSON.stringify(this.config));
         Log.info("🌐 MMM-HabitTracker: Backend URL - " + this.config.backendUrl);
-        this.loadSettings();
-        this.initWebSocket();
+        
+        // Initialize with empty habits
+        this.habits = [];
+        this.randomNumber = 0;
+        
+        // Tell node helper to initialize
+        this.sendSocketNotification("INIT", {
+            backendUrl: this.config.backendUrl
+        });
+        
         Log.info("✅ MMM-HabitTracker: Module started successfully");
     },
 
-    // Initialize WebSocket connection
-    initWebSocket: function() {
-        try {
-            // Import socket.io client (this will be loaded in the browser)
-            const script = document.createElement('script');
-            script.src = this.config.backendUrl + '/socket.io/socket.io.js';
-            script.onload = () => {
-                this.socket = io(this.config.backendUrl);
-                this.setupWebSocketEvents();
-            };
-            document.head.appendChild(script);
-        } catch (error) {
-            Log.error("❌ MMM-HabitTracker: WebSocket initialization failed - " + error.message);
-        }
-    },
-
-    // Setup WebSocket event handlers
-    setupWebSocketEvents: function() {
-        if (!this.socket) return;
-
-        this.socket.on('connect', () => {
-            Log.info("🔌 MMM-HabitTracker: WebSocket connected");
-        });
-
-        this.socket.on('disconnect', () => {
-            Log.warn("🔌 MMM-HabitTracker: WebSocket disconnected");
-        });
-
-        this.socket.on('randomNumber', (data) => {
-            this.randomNumber = data.number;
-            Log.info(`🧪 MMM-HabitTracker: Received random number: ${data.number}`);
+    // Handle socket notifications from node helper
+    socketNotificationReceived: function(notification, payload) {
+        Log.info("📨 MMM-HabitTracker: Received notification - " + notification);
+        
+        if (notification === "SETTINGS_LOADED") {
+            if (payload && payload.habits) {
+                this.settings = payload;
+                Log.info("✅ MMM-HabitTracker: Settings loaded - " + payload.habits.length + " habits");
+                this.loadHabits();
+            } else {
+                Log.error("❌ MMM-HabitTracker: Failed to load settings");
+            }
+        } else if (notification === "HABITS_LOADED") {
+            if (payload && payload.habits) {
+                this.habits = payload.habits;
+                Log.info("✅ MMM-HabitTracker: Loaded " + this.habits.length + " habits from backend");
+                Log.info("📋 MMM-HabitTracker: Habits - " + JSON.stringify(this.habits.map(h => h.name)));
+            } else {
+                // Initialize with default habits if none loaded
+                Log.warn("⚠️ MMM-HabitTracker: No habits from backend, using settings");
+                const habitsList = this.settings ? this.settings.habits : ["Loading habits..."];
+                this.habits = habitsList.map(habit => ({
+                    name: habit,
+                    completed: false,
+                    date: this.getTodayString()
+                }));
+            }
             this.updateDom();
-        });
-
-        this.socket.on('testStatus', (status) => {
-            Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(status));
-        });
+        } else if (notification === "HABITS_SAVED") {
+            Log.info("✅ MMM-HabitTracker: Habits saved successfully");
+        } else if (notification === "HABITS_ERROR") {
+            Log.error("❌ MMM-HabitTracker: Error loading/saving habits - " + JSON.stringify(payload));
+        } else if (notification === "RANDOM_NUMBER") {
+            this.randomNumber = payload.number;
+            Log.info(`🧪 MMM-HabitTracker: Received random number: ${payload.number}`);
+            this.updateDom();
+        } else if (notification === "TEST_STATUS") {
+            Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(payload));
+        }
     },
 
     // Load settings from backend
@@ -171,14 +179,12 @@ Module.register("MMM-HabitTracker", {
             Log.info("✅ MMM-HabitTracker: Habits saved successfully");
         } else if (notification === "HABITS_ERROR") {
             Log.error("❌ MMM-HabitTracker: Error loading/saving habits - " + JSON.stringify(payload));
-            // Fallback to local storage or default habits
-            Log.warn("🔄 MMM-HabitTracker: Falling back to default habits");
-            this.habits = this.config.habits.map(habit => ({
-                name: habit,
-                completed: false,
-                date: this.getTodayString()
-            }));
+        } else if (notification === "RANDOM_NUMBER") {
+            this.randomNumber = payload.number;
+            Log.info(`🧪 MMM-HabitTracker: Received random number: ${payload.number}`);
             this.updateDom();
+        } else if (notification === "TEST_STATUS") {
+            Log.info("🧪 MMM-HabitTracker: Test service status - " + JSON.stringify(payload));
         }
     },
 

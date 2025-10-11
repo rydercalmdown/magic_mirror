@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Install OpenCV with pre-built binaries for Raspberry Pi
-# This avoids the need to compile OpenCV from source
+# Install Node.js dependencies from package.json
+# This includes socket.io-client for the node helper
 
-echo "📦 Installing OpenCV with pre-built binaries..."
+echo "📦 Installing Node.js dependencies..."
 
 # Clean up any existing node_modules
 if [ -d "node_modules" ]; then
@@ -16,20 +16,15 @@ if [ -f "package-lock.json" ]; then
     rm -f package-lock.json
 fi
 
-# Install basic dependencies first
-echo "📦 Installing basic Node.js dependencies..."
-npm install express cors socket.io
-
-# Install OpenCV with pre-built binaries
-echo "📦 Installing OpenCV with pre-built binaries..."
-npm install opencv4nodejs --opencv4nodejs_binary_host_mirror=https://github.com/opencv4nodejs/opencv4nodejs-prebuilt/releases/download/5.6.0/
+# Install all dependencies from package.json
+echo "📦 Installing all dependencies from package.json..."
+npm install
 
 if [ $? -eq 0 ]; then
-    echo "✅ OpenCV installed successfully with pre-built binaries!"
+    echo "✅ All dependencies installed successfully!"
 else
-    echo "❌ Failed to install OpenCV with pre-built binaries"
-    echo "🔄 Trying alternative pre-built mirror..."
-    npm install opencv4nodejs --opencv4nodejs_binary_host_mirror=https://github.com/opencv4nodejs/opencv4nodejs-prebuilt/releases/download/5.6.0/ --force
+    echo "❌ Failed to install dependencies"
+    exit 1
 fi
 
-echo "✅ OpenCV installation complete!"
+echo "✅ Node.js installation complete!"

@@ -1,25 +1,69 @@
 // Node helper for MMM-HabitTracker
-// Handles socket notifications and backend communication
+// Handles backend communication via WebSocket and HTTP
 
 const NodeHelper = require("node_helper");
 const https = require("https");
 const http = require("http");
+const io = require("socket.io-client");
 
 module.exports = NodeHelper.create({
     start: function() {
         console.log("🚀 MMM-HabitTracker: Node helper started");
+        this.backendSocket = null;
+        this.backendUrl = null;
     },
 
     socketNotificationReceived: function(notification, payload) {
         console.log("📨 MMM-HabitTracker: Received notification - " + notification);
         
-        if (notification === "LOAD_SETTINGS") {
+        if (notification === "INIT") {
+            this.backendUrl = payload.backendUrl;
+            this.connectToBackend();
+        } else if (notification === "LOAD_SETTINGS") {
             this.loadSettings(payload.url);
         } else if (notification === "LOAD_HABITS") {
             this.loadHabits(payload.url, payload.date);
         } else if (notification === "SAVE_HABITS") {
             this.saveHabits(payload.url, payload.habits, payload.date);
         }
+    },
+
+    connectToBackend: function() {
+        if (!this.backendUrl) {
+            console.error("❌ MMM-HabitTracker: No backend URL provided");
+            return;
+        }
+
+        console.log("🔌 MMM-HabitTracker: Connecting to backend at " + this.backendUrl);
+        
+        this.backendSocket = io(this.backendUrl, {
+            transports: ['websocket', 'polling']
+        });
+
+        this.backendSocket.on('connect', () => {
+            console.log("✅ MMM-HabitTracker: Connected to backend");
+            this.sendSocketNotification("TEST_STATUS", { connected: true });
+        });
+
+        this.backendSocket.on('disconnect', () => {
+            console.log("❌ MMM-HabitTracker: Disconnected from backend");
+            this.sendSocketNotification("TEST_STATUS", { connected: false });
+        });
+
+        this.backendSocket.on('randomNumber', (data) => {
+            console.log("🧪 MMM-HabitTracker: Received random number from backend: " + data.number);
+            this.sendSocketNotification("RANDOM_NUMBER", data);
+        });
+
+        this.backendSocket.on('testStatus', (status) => {
+            console.log("🧪 MMM-HabitTracker: Backend test status: " + JSON.stringify(status));
+            this.sendSocketNotification("TEST_STATUS", status);
+        });
+
+        this.backendSocket.on('connect_error', (error) => {
+            console.error("❌ MMM-HabitTracker: Backend connection error: " + error.message);
+            this.sendSocketNotification("TEST_STATUS", { connected: false, error: error.message });
+        });
     },
 
     loadSettings: function(url) {
