@@ -104,8 +104,11 @@ class ActionRecognizer:
         if not self.enabled or self.pipeline is None:
             return
         try:
-            # Pipeline is expected to return an action label or None
-            action_label = self.pipeline.predict_frame_bgr(frame_bgr)
+            # Use training pipeline API
+            action_label, conf, _ = self.pipeline.process_frame(frame_bgr)
+            # Optional: only accept confident labels
+            if action_label in (None, 'no_action', 'collecting_data'):
+                action_label = None
         except Exception as e:
             # If the pipeline raises, disable to avoid spamming
             print(f"⚠️ ActionRecognizer: Pipeline error: {e}")
