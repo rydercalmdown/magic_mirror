@@ -1,5 +1,4 @@
-# MMM-HabitTracker
-
+# Magic Mirror - Habit Tracker
 A MagicMirror module for tracking daily habits with completion status. Habits reset at the end of each day and can be toggled by clicking on them.
 
 ## Features
@@ -16,7 +15,7 @@ A MagicMirror module for tracking daily habits with completion status. Habits re
 1. Clone this repository or copy the `MMM-HabitTracker` folder to your MagicMirror modules directory:
    ```bash
    cd ~/MagicMirror/modules
-   git clone <repository-url> MMM-HabitTracker
+   git clone https://github.com/rydercalmdown/magic_mirror.git MMM-HabitTracker
    ```
 
 2. Install backend dependencies:
