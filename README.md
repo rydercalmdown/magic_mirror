@@ -31,7 +31,7 @@ A MagicMirror module for tracking daily habits with completion status. Habits re
        module: "MMM-HabitTracker",
        position: "top_right",
        config: {
-           updateInterval: 60000, // Update every minute
+           updateInterval: 2000, // Update every two seconds
            habits: [
                "Brush teeth",
                "Floss",
@@ -48,12 +48,56 @@ A MagicMirror module for tracking daily habits with completion status. Habits re
 
 ## Backend Setup
 
-The module requires a simple backend API to store habit data. Start the backend server:
+The module requires a simple backend API to store habit data. The backend can be run as a daemon using PM2 for automatic restart and management.
+
+### Quick Setup
+
+Run the automated setup script:
 
 ```bash
-cd MMM-HabitTracker
-node backend.js
+make setup
+# or directly: ./scripts/setup-backend.sh
 ```
+
+This will install dependencies, set up PM2, and start the backend daemon.
+
+### Manual Setup
+
+1. Install dependencies:
+   ```bash
+   make install-backend-deps
+   ```
+
+2. Start the backend daemon:
+   ```bash
+   make start-backend
+   ```
+
+3. (Optional) Set up auto-start on boot:
+   ```bash
+   make setup-backend-daemon
+   ```
+
+### Backend Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `make setup` | Run the automated setup script |
+| `make start-backend` | Start the backend daemon |
+| `make stop-backend` | Stop the backend daemon |
+| `make restart-backend` | Restart the backend daemon |
+| `make status-backend` | Check backend status |
+| `make logs-backend` | View backend logs |
+| `make setup-backend-daemon` | Set up auto-start on boot |
+| `make setup-systemd` | Set up systemd service (requires sudo) |
+
+### Scripts Directory
+
+All setup and utility scripts are located in the `scripts/` directory:
+
+- `scripts/setup-backend.sh` - Main automated setup script
+- `scripts/setup-systemd.sh` - Systemd service setup
+- `scripts/start-backend.sh` - Simple backend startup script
 
 The backend will run on `http://localhost:5000` by default.
 
@@ -76,15 +120,43 @@ The backend will run on `http://localhost:5000` by default.
 
 ## Usage
 
-1. Start the backend server: `node backend.js`
+1. Start the backend daemon: `make start-backend`
 2. Start your MagicMirror
 3. Click on any habit to toggle its completion status
 4. Habits automatically reset at the end of each day
 5. Completed habits are displayed with strikethrough text
 
+### Backend Management
+
+- **Quick setup**: `make setup`
+- **Start backend**: `make start-backend`
+- **Stop backend**: `make stop-backend`
+- **Restart backend**: `make restart-backend`
+- **Check status**: `make status-backend`
+- **View logs**: `make logs-backend`
+- **Auto-start on boot**: `make setup-backend-daemon`
+
+## Project Structure
+
+```
+magic_mirror/
+├── data/                   # Data storage directory
+│   └── habits_data.json   # Habit tracking data
+├── scripts/               # Setup and utility scripts
+│   ├── setup-backend.sh
+│   ├── setup-systemd.sh
+│   └── start-backend.sh
+├── logs/                  # PM2 log files
+├── module.js              # MagicMirror module
+├── MMM-HabitTracker.css   # Module styling
+├── backend.js             # Backend API server
+├── ecosystem.config.js    # PM2 configuration
+└── Makefile              # Build and management commands
+```
+
 ## Data Storage
 
-Habit data is stored in `habits_data.json` in the module directory. The data structure is:
+Habit data is stored in `data/habits_data.json` in the project directory. The data structure is:
 
 ```json
 {

@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Data storage file
-const DATA_FILE = path.join(__dirname, 'habits_data.json');
+const DATA_FILE = path.join(__dirname, 'data', 'habits_data.json');
 
 // Initialize data file if it doesn't exist
 if (!fs.existsSync(DATA_FILE)) {

@@ -1,0 +1,16 @@
+[Unit]
+Description=Magic Mirror Backend API
+After=network.target
+
+[Service]
+Type=forking
+User=ryder
+WorkingDirectory=/Users/ryder/Code/rydercalmdown/magic_mirror
+ExecStart=/usr/local/bin/pm2 start ecosystem.config.js
+ExecStop=/usr/local/bin/pm2 stop magic-mirror-backend
+ExecReload=/usr/local/bin/pm2 restart magic-mirror-backend
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,19 +1,22 @@
 # Makefile for Magic Mirror project
 
 # Variables
-# BACKEND_IMAGE_NAME = magic-mirror-backend # No longer needed directly
 FRONTEND_DIR = frontend
-# BACKEND_DIR = backend # No longer needed directly
+BACKEND_APP_NAME = magic-mirror-backend
 
-.PHONY: install run frontend clean
+.PHONY: install run frontend clean start-backend stop-backend restart-backend status-backend logs-backend install-backend-deps setup-backend-daemon setup setup-systemd
 
 # Install dependencies
-install:
+install: install-backend-deps
 	@echo "Installing frontend dependencies..."
 	cd $(FRONTEND_DIR) && npm install
-	# Backend dependencies are handled by docker-compose build
-	@echo "Backend dependencies will be installed via docker-compose on first run."
 	@echo "Installation complete."
+
+# Install backend dependencies
+install-backend-deps:
+	@echo "Installing backend dependencies..."
+	npm install express cors
+	@echo "Backend dependencies installed."
 
 # Run the backend services (Docker Compose)
 run: 
@@ -26,6 +29,48 @@ frontend:
 	@echo "Starting frontend development server..."
 	cd $(FRONTEND_DIR) && npm run dev
 	@echo "Frontend server accessible at http://localhost:3000 (usually)"
+
+# Backend daemon management
+start-backend:
+	@echo "Starting Magic Mirror backend daemon..."
+	@pm2 start ecosystem.config.js
+	@echo "Backend daemon started. Use 'make status-backend' to check status."
+
+stop-backend:
+	@echo "Stopping Magic Mirror backend daemon..."
+	@pm2 stop $(BACKEND_APP_NAME)
+	@echo "Backend daemon stopped."
+
+restart-backend:
+	@echo "Restarting Magic Mirror backend daemon..."
+	@pm2 restart $(BACKEND_APP_NAME)
+	@echo "Backend daemon restarted."
+
+status-backend:
+	@echo "Magic Mirror backend daemon status:"
+	@pm2 status $(BACKEND_APP_NAME)
+
+logs-backend:
+	@echo "Magic Mirror backend daemon logs:"
+	@pm2 logs $(BACKEND_APP_NAME) --lines 50
+
+# Setup backend daemon to start on boot
+setup-backend-daemon:
+	@echo "Setting up Magic Mirror backend to start on boot..."
+	@pm2 startup
+	@pm2 save
+	@echo "Backend daemon will now start automatically on boot."
+
+# Run the main setup script
+setup:
+	@echo "Running Magic Mirror Backend setup..."
+	@./scripts/setup-backend.sh
+
+# Setup systemd service for backend (requires sudo)
+setup-systemd:
+	@echo "Setting up systemd service for Magic Mirror backend..."
+	@sudo ./scripts/setup-systemd.sh
+	@echo "Systemd service installed and enabled."
 
 # Clean up Docker Compose resources
 clean:
