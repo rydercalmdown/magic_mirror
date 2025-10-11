@@ -46,6 +46,7 @@ module.exports = NodeHelper.create({
 
         this.backendSocket.on('connect', () => {
             console.log("✅ MMM-HabitTracker: Connected to backend");
+            console.log("🔌 MMM-HabitTracker: Socket ID:", this.backendSocket.id);
             this.sendSocketNotification("TEST_STATUS", { connected: true });
         });
 

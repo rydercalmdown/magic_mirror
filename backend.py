@@ -26,7 +26,8 @@ CORS(app)
 sio = socketio.Server(
     cors_allowed_origins="*",
     logger=True,
-    engineio_logger=True
+    engineio_logger=True,
+    async_mode='eventlet'
 )
 flask_app = socketio.WSGIApp(sio, app)
 
