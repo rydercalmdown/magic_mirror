@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install Python dependencies for the backend using virtual environment
-# This includes Flask, OpenCV, and other required packages
+# This includes Flask, OpenCV, Socket.IO and training pipeline deps
 
 echo "📦 Installing Python dependencies..."
 
@@ -40,9 +40,16 @@ source "$VENV_DIR/bin/activate"
 echo "📦 Upgrading pip..."
 pip install --upgrade pip
 
-# Install Python dependencies
+# Install core backend deps
 echo "📦 Installing Python packages from requirements.txt..."
 pip install -r requirements.txt
+
+# Install training pipeline dependencies if available (mediapipe/torch/sklearn)
+echo "🧠 Installing training pipeline dependencies (if missing)..."
+pip install --upgrade pip wheel setuptools
+pip install mediapipe==0.10.14 scikit-learn==1.3.2 || true
+# Try to install a cpu-only torch suitable for Pi; if fails, skip silently
+pip install torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cpu || true
 
 if [ $? -eq 0 ]; then
     echo "✅ Python dependencies installed successfully!"
