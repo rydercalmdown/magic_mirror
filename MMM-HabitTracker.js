@@ -309,6 +309,8 @@ Module.register("MMM-HabitTracker", {
         img.style.display = 'block';
         img.style.marginTop = '10px';
         img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.objectFit = 'contain';
         img.style.borderRadius = '8px';
         img.style.opacity = '0.9';
         wrapper.appendChild(img);

@@ -166,10 +166,10 @@ class WebcamMonitor:
             print(f"❌ Webcam Monitor: Could not open camera {self.camera_index}")
             return
         
-        # Set camera properties
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        cap.set(cv2.CAP_PROP_FPS, 15)
+        # Set camera properties (aim for native or higher FPS if available)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        cap.set(cv2.CAP_PROP_FPS, 30)
         
         previous_frame = None
         
@@ -180,9 +180,9 @@ class WebcamMonitor:
                 time.sleep(1)
                 continue
             
-            # Encode and store latest JPEG for the stream (quality 70)
+            # Encode and store latest JPEG for the stream (lower quality to reduce latency)
             try:
-                ok, jpg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                ok, jpg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 55])
                 if ok:
                     self.latest_jpeg = jpg.tobytes()
             except Exception as _:
