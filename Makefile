@@ -4,19 +4,18 @@
 FRONTEND_DIR = frontend
 BACKEND_APP_NAME = magic-mirror-backend
 
-.PHONY: install run frontend clean start-backend stop-backend restart-backend status-backend logs-backend install-backend-deps setup-backend-daemon setup setup-systemd
+.PHONY: install run frontend clean start-backend stop-backend restart-backend status-backend logs-backend setup-backend-daemon setup setup-systemd
 
-# Install dependencies
-install: install-backend-deps
-	@echo "Installing frontend dependencies..."
-	cd $(FRONTEND_DIR) && npm install
-	@echo "Installation complete."
-
-# Install backend dependencies
-install-backend-deps:
-	@echo "Installing backend dependencies..."
+# Install all dependencies and setup backend
+install:
+	@echo "🚀 Installing all dependencies and setting up backend..."
+	@echo "📦 Installing backend dependencies..."
 	npm install express cors
-	@echo "Backend dependencies installed."
+	@echo "📦 Installing frontend dependencies..."
+	cd $(FRONTEND_DIR) && npm install
+	@echo "🔧 Setting up backend daemon..."
+	@./scripts/setup-backend.sh
+	@echo "✅ Installation and setup complete! Backend is running and ready to use."
 
 # Run the backend services (Docker Compose)
 run: 
@@ -61,7 +60,7 @@ setup-backend-daemon:
 	@pm2 save
 	@echo "Backend daemon will now start automatically on boot."
 
-# Run the main setup script
+# Run the main setup script (backend only)
 setup:
 	@echo "Running Magic Mirror Backend setup..."
 	@./scripts/setup-backend.sh

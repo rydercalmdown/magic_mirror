@@ -52,37 +52,30 @@ The module requires a simple backend API to store habit data. The backend can be
 
 ### Quick Setup
 
-Run the automated setup script:
-
+**One-command setup (recommended)**
 ```bash
-make setup
-# or directly: ./scripts/setup-backend.sh
+make install
 ```
+This will install all dependencies and set up the backend daemon.
 
-This will install dependencies, set up PM2, and start the backend daemon.
+**Manual setup**
+```bash
+# Install dependencies only
+npm install express cors
 
-### Manual Setup
+# Setup backend daemon
+make setup
 
-1. Install dependencies:
-   ```bash
-   make install-backend-deps
-   ```
-
-2. Start the backend daemon:
-   ```bash
-   make start-backend
-   ```
-
-3. (Optional) Set up auto-start on boot:
-   ```bash
-   make setup-backend-daemon
-   ```
+# (Optional) Set up auto-start on boot
+make setup-backend-daemon
+```
 
 ### Backend Management Commands
 
 | Command | Description |
 |---------|-------------|
-| `make setup` | Run the automated setup script |
+| `make install` | **Install all dependencies and setup backend** |
+| `make setup` | Run the automated backend setup script |
 | `make start-backend` | Start the backend daemon |
 | `make stop-backend` | Stop the backend daemon |
 | `make restart-backend` | Restart the backend daemon |
@@ -122,7 +115,7 @@ The backend will run on `http://localhost:5000` by default.
 
 ## Usage
 
-1. Start the backend daemon: `make start-backend`
+1. **Install and setup**: `make install` (installs dependencies and starts backend)
 2. Start your MagicMirror
 3. Click on any habit to toggle its completion status
 4. Habits automatically reset at the end of each day
@@ -130,7 +123,7 @@ The backend will run on `http://localhost:5000` by default.
 
 ### Backend Management
 
-- **Quick setup**: `make setup`
+- **Install and setup**: `make install`
 - **Start backend**: `make start-backend`
 - **Stop backend**: `make stop-backend`
 - **Restart backend**: `make restart-backend`

@@ -13,6 +13,12 @@ app.use(express.json());
 
 // Data storage file
 const DATA_FILE = path.join(__dirname, 'data', 'habits_data.json');
+const DATA_DIR = path.dirname(DATA_FILE);
+
+// Create data directory if it doesn't exist
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // Initialize data file if it doesn't exist
 if (!fs.existsSync(DATA_FILE)) {
