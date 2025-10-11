@@ -23,7 +23,11 @@ app = Flask(__name__)
 CORS(app)
 
 # Initialize Socket.IO
-sio = socketio.Server(cors_allowed_origins="*")
+sio = socketio.Server(
+    cors_allowed_origins="*",
+    logger=True,
+    engineio_logger=True
+)
 flask_app = socketio.WSGIApp(sio, app)
 
 # Configuration
@@ -356,4 +360,5 @@ if __name__ == '__main__':
         eventlet.wsgi.server(eventlet.listen(('', PORT)), flask_app)
     except ImportError:
         print("⚠️ eventlet not available, using development server")
-        app.run(host='0.0.0.0', port=PORT, debug=False)
+        # Use Socket.IO's built-in server instead of Flask's development server
+        sio.run(app, host='0.0.0.0', port=PORT, debug=False)
