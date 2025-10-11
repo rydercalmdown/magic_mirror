@@ -78,4 +78,5 @@ clean:
 restart:
 	@pm2 restart magic-mirror-backend
 	@pm2 restart magic-mirror
+	@pm2 save
 	@sudo reboot
