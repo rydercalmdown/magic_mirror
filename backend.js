@@ -3,16 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const settings = require('./settings');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || settings.port;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Data storage file
-const DATA_FILE = path.join(__dirname, 'data', 'habits_data.json');
+const DATA_FILE = path.join(__dirname, settings.data.file);
 const DATA_DIR = path.dirname(DATA_FILE);
 
 // Create data directory if it doesn't exist
@@ -89,6 +90,14 @@ app.post('/api/habits', (req, res) => {
 app.get('/api/habits/all', (req, res) => {
     const habitsData = loadHabitsData();
     res.json(habitsData);
+});
+
+// Get settings endpoint
+app.get('/api/settings', (req, res) => {
+    res.json({
+        habits: settings.habits,
+        module: settings.module
+    });
 });
 
 // Health check endpoint

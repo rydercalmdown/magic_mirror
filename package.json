@@ -41,19 +41,6 @@
   },
   "magicmirror": {
     "module": "MMM-HabitTracker",
-    "position": "center",
-    "config": {
-      "updateInterval": 60000,
-      "habits": [
-        "Brush teeth",
-        "Floss",
-        "Exercise",
-        "Read for 30 minutes",
-        "Meditate"
-      ],
-      "backendUrl": "http://localhost:5000",
-      "showCompletedCount": true,
-      "showProgressBar": true
-    }
+    "position": "center"
   }
 }

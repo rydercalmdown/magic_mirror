@@ -1,31 +1,29 @@
 Module.register("MMM-HabitTracker", {
     // Default module config
     defaults: {
-        updateInterval: 60000, // Update every minute
-        habits: [
-            "Brush teeth",
-            "Floss",
-            "Exercise",
-            "Read for 30 minutes",
-            "Meditate"
-        ],
-        backendUrl: "http://localhost:5000", // Backend API URL
-        showCompletedCount: true,
-        showProgressBar: true
+        backendUrl: "http://localhost:5000" // Backend API URL
     },
 
     // Module properties
     habits: [],
     lastUpdateDate: null,
+    settings: null,
 
     // Start the module
     start: function() {
         Log.info("🚀 MMM-HabitTracker: Starting module");
         Log.info("📋 MMM-HabitTracker: Config - " + JSON.stringify(this.config));
         Log.info("🌐 MMM-HabitTracker: Backend URL - " + this.config.backendUrl);
-        this.loadHabits();
-        this.scheduleUpdate();
+        this.loadSettings();
         Log.info("✅ MMM-HabitTracker: Module started successfully");
+    },
+
+    // Load settings from backend
+    loadSettings: function() {
+        Log.info("⚙️ MMM-HabitTracker: Loading settings from backend");
+        this.sendSocketNotification("LOAD_SETTINGS", {
+            url: this.config.backendUrl + "/api/settings"
+        });
     },
 
     // Load habits from backend or initialize with defaults
@@ -101,15 +99,25 @@ Module.register("MMM-HabitTracker", {
     socketNotificationReceived: function(notification, payload) {
         Log.info("📨 MMM-HabitTracker: Received notification - " + notification);
         
-        if (notification === "HABITS_LOADED") {
+        if (notification === "SETTINGS_LOADED") {
+            if (payload && payload.habits) {
+                this.settings = payload;
+                Log.info("✅ MMM-HabitTracker: Settings loaded - " + payload.habits.length + " habits");
+                this.loadHabits();
+                this.scheduleUpdate();
+            } else {
+                Log.error("❌ MMM-HabitTracker: Failed to load settings");
+            }
+        } else if (notification === "HABITS_LOADED") {
             if (payload && payload.habits) {
                 this.habits = payload.habits;
                 Log.info("✅ MMM-HabitTracker: Loaded " + this.habits.length + " habits from backend");
                 Log.info("📋 MMM-HabitTracker: Habits - " + JSON.stringify(this.habits.map(h => h.name)));
             } else {
                 // Initialize with default habits if none loaded
-                Log.warn("⚠️ MMM-HabitTracker: No habits from backend, using defaults");
-                this.habits = this.config.habits.map(habit => ({
+                Log.warn("⚠️ MMM-HabitTracker: No habits from backend, using settings");
+                const habitsList = this.settings ? this.settings.habits : ["Loading habits..."];
+                this.habits = habitsList.map(habit => ({
                     name: habit,
                     completed: false,
                     date: this.getTodayString()
@@ -169,7 +177,7 @@ Module.register("MMM-HabitTracker", {
 
         if (this.habits.length === 0) {
             // Show loading or default habits if none loaded
-            const defaultHabits = this.config.habits || ["Loading habits..."];
+            const defaultHabits = this.settings ? this.settings.habits : ["Loading habits..."];
             defaultHabits.forEach(habit => {
                 const habitItem = document.createElement("div");
                 habitItem.className = "habit-item";
