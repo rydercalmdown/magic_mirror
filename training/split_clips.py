@@ -60,22 +60,40 @@ def split_video_into_clips(input_path, output_dir, clip_duration=5):
 
 def main():
     # Define input and output directories
-    input_dir = "data/original"
+    input_base_dir = "data/original"
     output_dir = "data/clips"
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    # Get all mp4 files in the input directory
-    video_files = [f for f in os.listdir(input_dir) if f.endswith('.mp4')]
+    # Process videos from each category directory
+    categories = ["brushing", "flossing", "misc"]
     
-    # Process each video
-    for video_file in video_files:
-        input_path = os.path.join(input_dir, video_file)
+    for category in categories:
+        category_input_dir = os.path.join(input_base_dir, category)
         
-        print(f"Processing {video_file}...")
-        split_video_into_clips(input_path, output_dir)
-        print(f"Finished processing {video_file}")
+        if not os.path.exists(category_input_dir):
+            print(f"Directory {category_input_dir} does not exist, skipping...")
+            continue
+            
+        print(f"\nProcessing {category} videos...")
+        
+        # Get all video files in the category directory
+        video_extensions = ['.mp4', '.mov', '.MOV', '.avi', '.mkv']
+        video_files = [f for f in os.listdir(category_input_dir) 
+                      if any(f.endswith(ext) for ext in video_extensions)]
+        
+        if not video_files:
+            print(f"No video files found in {category_input_dir}")
+            continue
+        
+        # Process each video
+        for video_file in video_files:
+            input_path = os.path.join(category_input_dir, video_file)
+            
+            print(f"Processing {category}/{video_file}...")
+            split_video_into_clips(input_path, output_dir)
+            print(f"Finished processing {category}/{video_file}")
 
 
 if __name__ == "__main__":

@@ -125,14 +125,33 @@ def main():
     # Get all mp4 files in the input directory
     video_files = [f for f in os.listdir(input_dir) if f.endswith('.mp4')]
     
+    if not video_files:
+        print("❌ No video files found in data/clips/")
+        return
+    
+    print(f"📊 Found {len(video_files)} video clips to convert to time series")
+    print("🎯 This step extracts landmarks from each frame and saves as CSV")
+    print("⏱️  This should be faster than landmark extraction...")
+    print()
+    
     # Process each video
-    for video_file in video_files:
+    for i, video_file in enumerate(video_files, 1):
         video_path = os.path.join(input_dir, video_file)
         output_path = os.path.join(output_dir, video_file.replace('.mp4', '.csv'))
         
-        print(f"Processing {video_file}...")
-        process_video(video_path, output_path)
-        print(f"Saved landmarks to {output_path}")
+        print(f"[{i}/{len(video_files)}] 📈 Processing {video_file}...")
+        print(f"   Input: {video_path}")
+        print(f"   Output: {output_path}")
+        
+        try:
+            process_video(video_path, output_path)
+            print(f"   ✅ Successfully converted to time series")
+        except Exception as e:
+            print(f"   ❌ Error processing {video_file}: {str(e)}")
+        
+        print()  # Add spacing between files
+    
+    print(f"🎉 Time series conversion completed! Processed {len(video_files)} videos.")
 
 if __name__ == "__main__":
     main()

@@ -7,4 +7,9 @@ dependencies = [
     "mediapipe",
     "pandas",
     "tqdm",
+    "torch",
+    "torchvision",
+    "scikit-learn",
+    "numpy",
+    "opencv-python",
 ]
