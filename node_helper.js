@@ -37,7 +37,11 @@ module.exports = NodeHelper.create({
         console.log("🔌 MMM-HabitTracker: Connecting to backend at " + this.backendUrl);
         
         this.backendSocket = io(this.backendUrl, {
-            transports: ['websocket', 'polling']
+            transports: ['websocket', 'polling'],
+            upgrade: true,
+            rememberUpgrade: false,
+            timeout: 20000,
+            forceNew: true
         });
 
         this.backendSocket.on('connect', () => {
