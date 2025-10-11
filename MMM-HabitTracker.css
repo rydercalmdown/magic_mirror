@@ -13,22 +13,13 @@
     margin-bottom: 20px;
 }
 
-.habit-header h1 {
-    margin: 0 0 8px 0;
-    color: #fff;
-    font-size: 2.2em;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 1px;
-}
-
-.habit-header h3 {
-    margin: 0;
+.habit-header h2 {
+    margin: 0 0 20px 0;
     color: #B0BEC5;
-    font-size: 1.1em;
-    font-weight: 300;
+    font-size: 1.2em;
+    font-weight: 400;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    opacity: 0.9;
+    opacity: 0.8;
 }
 
 .habit-progress {
@@ -61,54 +52,38 @@
 .habits-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
 }
 
 .habit-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    padding: 20px 0;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .habit-item:hover {
-    background: rgba(255, 255, 255, 0.1);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.habit-item.completed {
-    background: rgba(76, 175, 80, 0.1);
-    border-color: rgba(76, 175, 80, 0.3);
-}
-
-.habit-checkbox {
-    margin-right: 12px;
-    font-size: 1.2em;
+.habit-text {
     color: #fff;
-    min-width: 20px;
+    font-size: 1.8em;
+    font-weight: 300;
     text-align: center;
-}
-
-.habit-item.completed .habit-checkbox {
-    color: #4CAF50;
-}
-
-.habit-name {
-    color: #fff;
-    font-size: 1em;
-    flex: 1;
     transition: all 0.2s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.habit-item.completed .habit-name {
+.habit-item.completed .habit-text {
     text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.6;
     color: #B0BEC5;
+}
+
+.habit-separator {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
 }
 
 /* Animation for completed habits */
@@ -136,11 +111,15 @@
     }
     
     .habit-item {
-        padding: 10px 12px;
+        padding: 15px 0;
+    }
+    
+    .habit-text {
+        font-size: 1.5em;
     }
     
     .habit-header h2 {
-        font-size: 1.3em;
+        font-size: 1.1em;
     }
 }
 

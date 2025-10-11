@@ -148,10 +148,7 @@ Module.register("MMM-HabitTracker", {
         // Header
         const header = document.createElement("div");
         header.className = "habit-header";
-        header.innerHTML = `
-            <h1>Habits</h1>
-            <h3>Today's Progress</h3>
-        `;
+        header.innerHTML = `<h2>Daily Habits</h2>`;
         wrapper.appendChild(header);
 
         // Progress bar
@@ -178,23 +175,24 @@ Module.register("MMM-HabitTracker", {
         if (this.habits.length === 0) {
             // Show loading or default habits if none loaded
             const defaultHabits = this.settings ? this.settings.habits : ["Loading habits..."];
-            defaultHabits.forEach(habit => {
+            defaultHabits.forEach((habit, index) => {
                 const habitItem = document.createElement("div");
                 habitItem.className = "habit-item";
-                habitItem.innerHTML = `
-                    <span class="habit-checkbox">○</span>
-                    <span class="habit-name">${habit}</span>
-                `;
+                habitItem.innerHTML = `<div class="habit-text">${habit}</div>`;
                 habitsList.appendChild(habitItem);
+                
+                // Add HR between habits (not after the last one)
+                if (index < defaultHabits.length - 1) {
+                    const hr = document.createElement("hr");
+                    hr.className = "habit-separator";
+                    habitsList.appendChild(hr);
+                }
             });
         } else {
-            this.habits.forEach(habit => {
+            this.habits.forEach((habit, index) => {
                 const habitItem = document.createElement("div");
                 habitItem.className = `habit-item ${habit.completed ? 'completed' : ''}`;
-                habitItem.innerHTML = `
-                    <span class="habit-checkbox">${habit.completed ? '✓' : '○'}</span>
-                    <span class="habit-name">${habit.name}</span>
-                `;
+                habitItem.innerHTML = `<div class="habit-text">${habit.name}</div>`;
                 
                 // Add click handler to toggle completion
                 habitItem.addEventListener('click', () => {
@@ -202,6 +200,13 @@ Module.register("MMM-HabitTracker", {
                 });
                 
                 habitsList.appendChild(habitItem);
+                
+                // Add HR between habits (not after the last one)
+                if (index < this.habits.length - 1) {
+                    const hr = document.createElement("hr");
+                    hr.className = "habit-separator";
+                    habitsList.appendChild(hr);
+                }
             });
         }
 
