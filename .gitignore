@@ -8,3 +8,4 @@ config.js
 node_modules/
 logs/
 data/
+package-lock.json
