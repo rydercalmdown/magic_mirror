@@ -88,6 +88,17 @@ module.exports = NodeHelper.create({
             this.sendSocketNotification("WEBCAM_ERROR", error);
         });
 
+        // Action recognition events
+        this.backendSocket.on('currentAction', (data) => {
+            console.log("🤖 MMM-HabitTracker: Current action from backend: " + JSON.stringify(data));
+            this.sendSocketNotification("CURRENT_ACTION", data);
+        });
+
+        this.backendSocket.on('habitUpdated', (data) => {
+            console.log("✅ MMM-HabitTracker: Habits updated from backend action: " + JSON.stringify(data));
+            this.sendSocketNotification("HABITS_UPDATED", data);
+        });
+
         this.backendSocket.on('connect_error', (error) => {
             console.error("❌ MMM-HabitTracker: Backend connection error: " + error.message);
             this.sendSocketNotification("TEST_STATUS", { connected: false, error: error.message });

@@ -10,6 +10,7 @@ Module.register("MMM-HabitTracker", {
     settings: null,
     randomNumber: 0,
     personDetected: false,
+    currentAction: null,
 
     // Start the module
     start: function() {
@@ -72,6 +73,16 @@ Module.register("MMM-HabitTracker", {
             Log.info("📹 MMM-HabitTracker: Webcam status - " + JSON.stringify(payload));
         } else if (notification === "WEBCAM_ERROR") {
             Log.error("❌ MMM-HabitTracker: Webcam error - " + JSON.stringify(payload));
+        } else if (notification === "CURRENT_ACTION") {
+            this.currentAction = payload && payload.label ? payload.label : null;
+            Log.info("🤖 MMM-HabitTracker: Current action - " + (this.currentAction || 'none'));
+            this.updateDom();
+        } else if (notification === "HABITS_UPDATED") {
+            if (payload && payload.habits) {
+                this.habits = payload.habits;
+                Log.info("✅ MMM-HabitTracker: Habits updated via backend action - " + JSON.stringify(this.habits));
+                this.updateDom();
+            }
         }
     },
 
@@ -314,6 +325,15 @@ Module.register("MMM-HabitTracker", {
         img.style.borderRadius = '8px';
         img.style.opacity = '0.9';
         wrapper.appendChild(img);
+
+        // Current action display
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'current-action';
+        actionDiv.style.marginTop = '8px';
+        actionDiv.style.fontSize = '0.9em';
+        actionDiv.style.opacity = '0.85';
+        actionDiv.textContent = `Current action: ${this.currentAction || '—'}`;
+        wrapper.appendChild(actionDiv);
 
         return wrapper;
     },

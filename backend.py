@@ -75,6 +75,89 @@ def load_settings():
 
 settings = load_settings()
 
+class ActionRecognizer:
+    """Action recognition service that consumes webcam frames when a person is detected,
+    estimates the current action, and marks habits complete after sustained detection.
+    """
+    def __init__(self, models_dir: Path, sustained_seconds: float = 60.0):
+        self.models_dir = models_dir
+        self.sustained_seconds = sustained_seconds
+        self.enabled = True
+        self.current_action = None
+        self.last_action = None
+        self.action_start_time = None
+        self.last_emit_time = 0.0
+        self.emit_interval = 0.5  # seconds between CURRENT_ACTION emits
+        # Try to import pipeline from training
+        self.pipeline = None
+        try:
+            # Lazy import to avoid heavy deps if missing
+            sys.path.append(str((Path(__file__).parent / 'training').resolve()))
+            from realtime_inference import RealtimeInference  # type: ignore
+            self.pipeline = RealtimeInference(models_path=str(models_dir))
+            print("🤖 ActionRecognizer: Loaded training pipeline")
+        except Exception as e:
+            print(f"⚠️ ActionRecognizer: Could not load training pipeline: {e}")
+            self.enabled = False
+
+    def process_frame(self, frame_bgr):
+        if not self.enabled or self.pipeline is None:
+            return
+        try:
+            # Pipeline is expected to return an action label or None
+            action_label = self.pipeline.predict_frame_bgr(frame_bgr)
+        except Exception as e:
+            # If the pipeline raises, disable to avoid spamming
+            print(f"⚠️ ActionRecognizer: Pipeline error: {e}")
+            self.enabled = False
+            return
+
+        now = time.monotonic()
+
+        # Emit current action periodically for the frontend
+        if action_label != self.current_action or (now - self.last_emit_time) >= self.emit_interval:
+            self.current_action = action_label
+            self.last_emit_time = now
+            sio.emit('currentAction', {
+                'label': self.current_action
+            })
+
+        # Track sustained action window
+        if action_label and action_label == self.last_action:
+            # continue current streak
+            pass
+        else:
+            # reset streak
+            self.action_start_time = now if action_label else None
+            self.last_action = action_label
+
+        if self.action_start_time and action_label:
+            elapsed = now - self.action_start_time
+            if elapsed >= self.sustained_seconds:
+                # Mark habit complete for matching action name if exists
+                habit_name = self._map_action_to_habit(action_label)
+                if habit_name:
+                    try:
+                        updated = mark_habit_completed(habit_name)
+                        if updated:
+                            sio.emit('habitUpdated', {
+                                'habits': updated,
+                                'completed': habit_name
+                            })
+                    except Exception as e:
+                        print(f"❌ ActionRecognizer: Failed to mark habit complete: {e}")
+                # reset timer to prevent repeated triggers
+                self.action_start_time = now
+
+    def _map_action_to_habit(self, action_label: str):
+        # Simple mapping; adjust as needed to match your labels and habit names
+        label = action_label.lower()
+        if 'brush' in label:
+            return 'Brush teeth'
+        if 'floss' in label:
+            return 'Floss'
+        return None
+
 class TestService:
     """Test service that sends random numbers"""
     
@@ -122,7 +205,7 @@ class TestService:
 class WebcamMonitor:
     """Webcam monitoring service for person detection"""
     
-    def __init__(self, camera_index=0, detection_interval=0.33):
+    def __init__(self, camera_index=0, detection_interval=0.33, action_recognizer=None):
         self.camera_index = camera_index
         self.detection_interval = detection_interval
         self.is_running = False
@@ -131,6 +214,7 @@ class WebcamMonitor:
         self.last_detection_time = None
         self.last_seen_time = None  # last frame timestamp where a person was seen
         self.latest_jpeg = None  # last encoded JPEG frame bytes for streaming
+        self.action_recognizer = action_recognizer
         
         # Load Haar cascades
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -232,6 +316,13 @@ class WebcamMonitor:
             
             previous_frame = gray.copy()
             time.sleep(self.detection_interval)
+
+            # Feed frames to action recognizer only while a person is detected
+            if self.person_detected and self.action_recognizer is not None:
+                try:
+                    self.action_recognizer.process_frame(frame)
+                except Exception as _:
+                    pass
         
         cap.release()
     
@@ -280,7 +371,8 @@ class WebcamMonitor:
 
 # Initialize services
 test_service = TestService(min_interval=1, max_interval=5)
-webcam_monitor = WebcamMonitor(camera_index=0, detection_interval=0.33)
+action_recognizer = ActionRecognizer(models_dir=Path(__file__).parent / 'training' / 'models', sustained_seconds=60.0)
+webcam_monitor = WebcamMonitor(camera_index=0, detection_interval=0.33, action_recognizer=action_recognizer)
 
 # Socket.IO event handlers
 @sio.event
@@ -336,6 +428,27 @@ def get_habits():
             return jsonify({'habits': habits})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+def mark_habit_completed(habit_name: str):
+    """Mark a habit complete for today and return updated habits list, or None on failure."""
+    date = datetime.now().strftime('%Y-%m-%d')
+    with open(DATA_FILE, 'r') as f:
+        try:
+            all_data = json.load(f)
+        except json.JSONDecodeError:
+            all_data = {}
+    if date not in all_data:
+        all_data[date] = [{'name': h, 'completed': False, 'date': date} for h in settings['habits']]
+    updated = False
+    for h in all_data[date]:
+        if h.get('name') == habit_name:
+            if not h.get('completed'):
+                h['completed'] = True
+                updated = True
+            break
+    with open(DATA_FILE, 'w') as f:
+        json.dump(all_data, f, indent=2)
+    return all_data[date] if updated else None
 
 @app.route('/api/habits', methods=['POST'])
 def save_habits():
