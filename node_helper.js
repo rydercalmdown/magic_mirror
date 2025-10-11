@@ -60,6 +60,11 @@ module.exports = NodeHelper.create({
             this.sendSocketNotification("RANDOM_NUMBER", data);
         });
 
+        // Add debugging for all events
+        this.backendSocket.onAny((eventName, ...args) => {
+            console.log("🔍 MMM-HabitTracker: Received event:", eventName, "with data:", args);
+        });
+
         this.backendSocket.on('testStatus', (status) => {
             console.log("🧪 MMM-HabitTracker: Backend test status: " + JSON.stringify(status));
             this.sendSocketNotification("TEST_STATUS", status);
