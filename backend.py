@@ -75,104 +75,8 @@ def load_settings():
 
 settings = load_settings()
 
-class ActionRecognizer:
-    """Action recognition service that consumes webcam frames when a person is detected,
-    estimates the current action, and marks habits complete after sustained detection.
-    """
-    def __init__(self, models_dir: Path, sustained_seconds: float = 60.0):
-        self.models_dir = models_dir
-        self.sustained_seconds = sustained_seconds
-        self.enabled = True
-        self.current_action = None
-        self.last_action = None
-        self.action_start_time = None
-        self.last_emit_time = 0.0
-        self.emit_interval = 0.5  # seconds between CURRENT_ACTION emits
-        # Try to import pipeline from training
-        self.pipeline = None
-        self.training_dir = (Path(__file__).parent / 'training').resolve()
-        try:
-            # Lazy import to avoid heavy deps if missing
-            sys.path.append(str(self.training_dir))
-            from realtime_inference import ActionRecognizer as TrainingActionRecognizer  # type: ignore
-            # Ensure relative model paths inside training code resolve
-            prev_cwd = os.getcwd()
-            try:
-                os.chdir(self.training_dir)
-                self.pipeline = TrainingActionRecognizer(model_path=str(self.models_dir / 'action_recognition_model.pth'))
-                print("🤖 ActionRecognizer: Loaded training pipeline from", self.training_dir)
-            finally:
-                os.chdir(prev_cwd)
-        except Exception as e:
-            print(f"⚠️ ActionRecognizer: Could not load training pipeline: {e}")
-            self.enabled = False
-
-    def process_frame(self, frame_bgr):
-        if not self.enabled or self.pipeline is None:
-            return
-        try:
-            # Use training pipeline API
-            # Switch to training dir so its relative paths (models/*) work during mediapipe run if needed
-            prev_cwd = os.getcwd()
-            os.chdir(self.training_dir)
-            action_label, conf, _ = self.pipeline.process_frame(frame_bgr)
-            os.chdir(prev_cwd)
-            print(f"🤖 ActionRecognizer: processed frame -> {action_label} (conf={conf:.2f})")
-            # Optional: only accept confident labels
-            if action_label in (None, 'no_action', 'collecting_data'):
-                action_label = None
-        except Exception as e:
-            # If the pipeline raises, disable to avoid spamming
-            print(f"⚠️ ActionRecognizer: Pipeline error: {e}")
-            self.enabled = False
-            return
-
-        now = time.monotonic()
-
-        # Emit current action periodically for the frontend
-        if action_label != self.current_action or (now - self.last_emit_time) >= self.emit_interval:
-            self.current_action = action_label
-            self.last_emit_time = now
-            print(f"🤖 ActionRecognizer: emitting CURRENT_ACTION: {self.current_action}")
-            sio.emit('currentAction', {
-                'label': self.current_action
-            })
-
-        # Track sustained action window
-        if action_label and action_label == self.last_action:
-            # continue current streak
-            pass
-        else:
-            # reset streak
-            self.action_start_time = now if action_label else None
-            self.last_action = action_label
-
-        if self.action_start_time and action_label:
-            elapsed = now - self.action_start_time
-            if elapsed >= self.sustained_seconds:
-                # Mark habit complete for matching action name if exists
-                habit_name = self._map_action_to_habit(action_label)
-                if habit_name:
-                    try:
-                        updated = mark_habit_completed(habit_name)
-                        if updated:
-                            sio.emit('habitUpdated', {
-                                'habits': updated,
-                                'completed': habit_name
-                            })
-                    except Exception as e:
-                        print(f"❌ ActionRecognizer: Failed to mark habit complete: {e}")
-                # reset timer to prevent repeated triggers
-                self.action_start_time = now
-
-    def _map_action_to_habit(self, action_label: str):
-        # Simple mapping; adjust as needed to match your labels and habit names
-        label = action_label.lower()
-        if 'brush' in label:
-            return 'Brush teeth'
-        if 'floss' in label:
-            return 'Floss'
-        return None
+# Import action recognizer service
+from services.action_recognizer import ActionRecognizer as ARService
 
 class TestService:
     """Test service that sends random numbers"""
@@ -387,7 +291,7 @@ class WebcamMonitor:
 
 # Initialize services
 test_service = TestService(min_interval=1, max_interval=5)
-action_recognizer = ActionRecognizer(models_dir=Path(__file__).parent / 'training' / 'models', sustained_seconds=60.0)
+action_recognizer = ARService(models_dir=Path(__file__).parent / 'training' / 'models', sustained_seconds=60.0, mark_habit_completed_fn=lambda name: mark_habit_completed(name))
 webcam_monitor = WebcamMonitor(camera_index=0, detection_interval=0.33, action_recognizer=action_recognizer)
 
 # Socket.IO event handlers
