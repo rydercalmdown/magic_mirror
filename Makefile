@@ -3,7 +3,7 @@
 # Variables
 BACKEND_APP_NAME = magic-mirror-backend
 
-.PHONY: install run clean start-backend stop-backend restart-backend status-backend logs-backend setup-backend-daemon setup setup-systemd
+.PHONY: install run clean start-backend stop-backend restart-backend status-backend logs-backend setup-backend-daemon setup setup-systemd osx
 
 # Install all dependencies and setup backend
 install:

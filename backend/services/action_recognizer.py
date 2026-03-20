@@ -23,7 +23,8 @@ class ActionRecognizer:
 
         # Try to import training pipeline
         self.pipeline = None
-        self.training_dir = (Path(__file__).resolve().parent.parent / 'training').resolve()
+        # Two levels up from backend/services → project root
+        self.training_dir = (Path(__file__).resolve().parents[2] / 'training').resolve()
         try:
             sys.path.append(str(self.training_dir))
             from realtime_inference import ActionRecognizer as TrainingActionRecognizer  # type: ignore
@@ -90,7 +91,7 @@ class ActionRecognizer:
                 self.action_start_time = now
 
     def _map_action_to_habit(self, action_label: str):
-        label = action_label.lower()
+        label = action_label.lower() if action_label else ''
         if 'brush' in label:
             return 'Brush teeth'
         if 'floss' in label:

@@ -1,0 +1,25 @@
+[project]
+name = "magic-mirror-backend"
+version = "0.1.0"
+description = "Flask + Socket.IO backend for Magic Mirror Habit Tracker"
+readme = "../README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "flask==2.3.3",
+  "flask-cors==4.0.0",
+  "python-socketio==5.8.0",
+  "eventlet==0.33.3",
+  "opencv-python==4.8.1.78",
+  "numpy==1.24.3",
+  "requests==2.31.0",
+  "mediapipe==0.10.14",
+  "torch",
+  "scikit-learn",
+]
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.uv.sources]
+
+
